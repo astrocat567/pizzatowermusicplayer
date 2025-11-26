@@ -3,224 +3,37 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Carousel Music Player</title>
+<title>Carousel Music Player (diagnostic)</title>
 <style>
-  :root{
-    --bg:#07070a;
-    --panel:#0f0f13;
-    --muted:#8c8c9a;
-    --accent:#5e5eff;
-    --card:#121217;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background:linear-gradient(180deg,var(--bg),#0b0b10 60%);
-    color:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    min-height:100vh;
-  }
-
-  .player {
-    width: min(980px, 96vw);
-    height: min(640px, 86vh);
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
-    border-radius:16px;
-    display:grid;
-    grid-template-columns: 1fr 440px;
-    overflow:hidden;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-    border:1px solid rgba(255,255,255,0.02);
-  }
-
-  .carousel-area {
-    padding: 32px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-    background: linear-gradient(90deg, rgba(255,255,255,0.01), transparent);
-  }
-
-  .covers {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap: 24px;
-    width:100%;
-    max-width:640px;
-  }
-
-  .cover {
-    width: 220px;
-    height: 220px;
-    border-radius:12px;
-    overflow:hidden;
-    flex-shrink:0;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-    transform-origin:center;
-    transition: transform .35s cubic-bezier(.2,.9,.3,1), opacity .35s;
-    background-size:cover;
-    background-position:center;
-  }
-
-  .cover.center {
-    width: 320px;
-    height: 320px;
-    transform: translateY(-6px) scale(1);
-    z-index:2;
-  }
-  .cover.side {
-    width: 200px;
-    height: 200px;
-    opacity:0.45;
-    transform: scale(.92);
-    filter: grayscale(.06) brightness(.9);
-  }
-  .cover.hidden {
-    opacity:0;
-    transform: translateX(30px) scale(.7);
-  }
-
-  .nav-symbol {
-    position:absolute;
-    top:50%;
-    transform:translateY(-50%);
-    font-size:34px;
-    color:var(--muted);
-    width:44px;
-    height:44px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:transparent;
-    border-radius:10px;
-    cursor:pointer;
-    user-select:none;
-    transition: color .15s, transform .12s;
-  }
-  .nav-symbol:hover { transform:translateY(-50%) scale(1.06); color:#fff; }
-  .nav-prev { left:18px; }
-  .nav-next { right:18px; }
-
-  .controls-area {
-    padding: 28px;
-    display:flex;
-    flex-direction:column;
-    gap:16px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-    border-left: 1px solid rgba(255,255,255,0.02);
-  }
-
-  .now-title {
-    text-align:center;
-    font-weight:600;
-    font-size:18px;
-    margin-top:2px;
-  }
-  .now-sub {
-    text-align:center;
-    color:var(--muted);
-    font-size:13px;
-    margin-bottom:12px;
-  }
-
-  .progress-wrap {
-    width:100%;
-    padding: 8px 12px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
-    border-radius:10px;
-  }
-
-  .progress {
-    position:relative;
-    height:10px;
-    background:rgba(255,255,255,0.04);
-    border-radius:999px;
-    cursor:pointer;
-    overflow:hidden;
-  }
-  .progress > .bar {
-    position:absolute;
-    left:0;top:0;bottom:0;
-    width:0%;
-    background:linear-gradient(90deg,var(--accent), #8aa8ff);
-    border-radius:999px;
-  }
-  .time-row {
-    display:flex;
-    justify-content:space-between;
-    font-size:12px;
-    color:var(--muted);
-    margin-top:8px;
-    user-select:none;
-  }
-
-  .controls-row {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:16px;
-    margin-top:14px;
-  }
-
-  .btn {
-    background:transparent;
-    border:1px solid rgba(255,255,255,0.06);
-    color:#fff;
-    padding:10px 14px;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:18px;
-    min-width:48px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    transition: background .12s, transform .08s;
-  }
-  .btn:hover{ transform:translateY(-3px) }
-  .btn.primary {
-    background: linear-gradient(90deg,var(--accent), #8aa8ff);
-    color:#07102a;
-    border: none;
-    font-weight:700;
-  }
-  .btn.tiny { padding:8px 10px; min-width:44px; font-size:16px; }
-
-  .playlist {
-    margin-top:8px;
-    padding:8px;
-    overflow:auto;
-    border-radius:8px;
-    background: rgba(255,255,255,0.01);
-    border:1px solid rgba(255,255,255,0.02);
-    flex:1;
-  }
-  .pl-item {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:10px 8px;
-    border-radius:8px;
-    margin-bottom:6px;
-    color:var(--muted);
-    font-size:14px;
-  }
-  .pl-item.current {
-    background: linear-gradient(90deg, rgba(94,94,255,0.08), rgba(255,255,255,0.01));
-    color:#fff;
-  }
-
-  @media (max-width:880px){
-    .player{ grid-template-columns: 1fr; height:92vh; width:96vw;}
-    .carousel-area{ padding:18px; }
-    .controls-area{ padding:18px; order:2; height:46vh; overflow:auto;}
-    .cover.center{ width:260px; height:260px}
-  }
+  /* (kept compact: same dark UI as before) */
+  :root{--bg:#07070a;--muted:#8c8c9a;--accent:#5e5eff}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#0b0b10 60%);color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .player{width:min(980px,96vw);height:min(640px,86vh);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.06));border-radius:12px;display:grid;grid-template-columns:1fr 420px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.02)}
+  .carousel-area{padding:28px;display:flex;align-items:center;justify-content:center;position:relative}
+  .covers{display:flex;gap:24px;align-items:center;justify-content:center;width:100%;max-width:640px}
+  .cover{width:220px;height:220px;border-radius:12px;background-size:cover;background-position:center;box-shadow:0 8px 30px rgba(0,0,0,0.6);transition:transform .35s,opacity .35s}
+  .cover.center{width:320px;height:320px;transform:translateY(-6px) scale(1);z-index:2}
+  .cover.side{width:200px;height:200px;opacity:.45;transform:scale(.92);filter:grayscale(.06) brightness(.9)}
+  .cover.hidden{opacity:0;transform:translateX(30px) scale(.7)}
+  .nav-symbol{position:absolute;top:50%;transform:translateY(-50%);font-size:34px;color:var(--muted);width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+  .nav-prev{left:14px}.nav-next{right:14px}
+  .controls-area{padding:20px;display:flex;flex-direction:column;gap:12px;border-left:1px solid rgba(255,255,255,0.02)}
+  .now-title{text-align:center;font-weight:600;font-size:18px}
+  .now-sub{text-align:center;color:var(--muted);font-size:13px}
+  .progress-wrap{padding:8px 12px;background:linear-gradient(90deg,rgba(255,255,255,0.01),rgba(0,0,0,0.02));border-radius:10px}
+  .progress{position:relative;height:10px;background:rgba(255,255,255,0.04);border-radius:999px;cursor:pointer;overflow:hidden}
+  .progress>.bar{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--accent),#8aa8ff);border-radius:999px}
+  .time-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:8px}
+  .controls-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
+  .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer;font-size:16px}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),#8aa8ff);color:#07102a;border:none;font-weight:700}
+  .playlist{margin-top:8px;padding:8px;overflow:auto;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02);flex:1}
+  .pl-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;margin-bottom:6px;color:var(--muted);font-size:14px}
+  .pl-item.current{background:linear-gradient(90deg,rgba(94,94,255,0.08),rgba(255,255,255,0.01));color:#fff}
+  @media (max-width:880px){.player{grid-template-columns:1fr;height:92vh;width:96vw}.carousel-area{padding:14px}.controls-area{order:2;height:46vh;overflow:auto}}
+  /* small debug box for quick messages on UI */
+  #debugBox{position:fixed;left:12px;bottom:12px;background:rgba(0,0,0,0.5);color:#ccc;padding:8px 10px;border-radius:8px;font-size:12px;max-width:40vw;z-index:999;opacity:.9}
 </style>
 </head>
 <body>
@@ -228,8 +41,8 @@
     <div class="carousel-area">
       <div class="nav-symbol nav-prev" id="btnPrev" title="Previous (>)">&gt;</div>
       <div class="covers" id="covers">
-        <div class="cover side" id="coverLeft" aria-hidden="true" ></div>
-        <div class="cover center" id="coverCenter" ></div>
+        <div class="cover side" id="coverLeft" aria-hidden="true"></div>
+        <div class="cover center" id="coverCenter"></div>
         <div class="cover side" id="coverRight" aria-hidden="true"></div>
       </div>
       <div class="nav-symbol nav-next" id="btnNext" title="Next (<)">&lt;</div>
@@ -242,19 +55,14 @@
       </div>
 
       <div class="progress-wrap">
-        <div class="progress" id="progressBar" aria-label="progress">
-          <div class="bar" id="progressFill"></div>
-        </div>
-        <div class="time-row">
-          <div id="curTime">0:00</div>
-          <div id="durTime">0:00</div>
-        </div>
+        <div class="progress" id="progressBar" aria-label="progress"><div class="bar" id="progressFill"></div></div>
+        <div class="time-row"><div id="curTime">0:00</div><div id="durTime">0:00</div></div>
       </div>
 
       <div class="controls-row">
-        <button class="btn tiny" id="skipPrev" title="Previous (>)">&gt;</button>
+        <button class="btn" id="skipPrev" title="Previous (>)">&gt;</button>
         <button class="btn" id="playPause" title="Play / Pause">►</button>
-        <button class="btn tiny" id="skipNext" title="Next (<)">&lt;</button>
+        <button class="btn" id="skipNext" title="Next (<)">&lt;</button>
         <button class="btn" id="repeatBtn" title="Repeat (toggle)">↻</button>
       </div>
 
@@ -262,155 +70,169 @@
     </div>
   </div>
 
+  <div id="debugBox" style="display:none"></div>
+
 <script>
-/* Helper: remove extension */
-function cleanTitle(filename) {
-  return filename.replace(/\.[^/.]+$/, "");
+/* -------------------------
+   CONFIG (manual override)
+   If auto-detection fails, set these to your GitHub username and repo name:
+   e.g. DEBUG_OWNER = 'myusername'; DEBUG_REPO = 'my-repo';
+   Leave null to auto-detect from the page URL.
+------------------------- */
+const DEBUG_OWNER = null; // 'username' or null
+const DEBUG_REPO  = null; // 'repo-name' or null
+
+/* Helper: logging with a prefix */
+function log(...args){ console.log('MUSICPLAYER:', ...args); }
+function warn(...args){ console.warn('MUSICPLAYER:', ...args); }
+function error(...args){ console.error('MUSICPLAYER:', ...args); }
+
+/* small UI debug helper */
+const debugBox = document.getElementById('debugBox');
+function showDebug(msg){
+  debugBox.style.display = 'block';
+  debugBox.textContent = msg;
 }
 
-/* Format seconds to M:SS */
-function fmt(s) {
-  if (!s && s !== 0) return '0:00';
-  s = Math.floor(s);
-  let m = Math.floor(s/60);
-  let sec = s%60;
-  return `${m}:${sec.toString().padStart(2,'0')}`;
-}
+/* Remove extension from filenames */
+function cleanTitle(filename){ return filename.replace(/\.[^/.]+$/, ""); }
+function fmt(s){ if (!s && s !== 0) return '0:00'; s=Math.floor(s); let m=Math.floor(s/60); let sec=s%60; return `${m}:${sec.toString().padStart(2,'0')}`; }
 
 /* DOM refs */
-const coverLeft = document.getElementById('coverLeft');
-const coverCenter = document.getElementById('coverCenter');
-const coverRight = document.getElementById('coverRight');
-const nowTitle = document.getElementById('nowTitle');
-const nowSub = document.getElementById('nowSub');
-const progressBar = document.getElementById('progressBar');
-const progressFill = document.getElementById('progressFill');
-const curTime = document.getElementById('curTime');
-const durTime = document.getElementById('durTime');
-const playPause = document.getElementById('playPause');
-const skipNext = document.getElementById('skipNext'); // "<" => NEXT (per user)
-const skipPrev = document.getElementById('skipPrev'); // ">" => PREV
-const btnNext = document.getElementById('btnNext'); // overlay left arrow ("<")
-const btnPrev = document.getElementById('btnPrev'); // overlay right arrow (">")
-const repeatBtn = document.getElementById('repeatBtn');
-const playlistBox = document.getElementById('playlistBox');
+const coverLeft = document.getElementById('coverLeft'), coverCenter = document.getElementById('coverCenter'), coverRight = document.getElementById('coverRight');
+const nowTitle = document.getElementById('nowTitle'), nowSub = document.getElementById('nowSub');
+const progressBar = document.getElementById('progressBar'), progressFill = document.getElementById('progressFill');
+const curTime = document.getElementById('curTime'), durTime = document.getElementById('durTime');
+const playPause = document.getElementById('playPause'), skipNext = document.getElementById('skipNext'), skipPrev = document.getElementById('skipPrev');
+const btnNext = document.getElementById('btnNext'), btnPrev = document.getElementById('btnPrev');
+const repeatBtn = document.getElementById('repeatBtn'), playlistBox = document.getElementById('playlistBox');
 
 /* State */
-let tracks = []; // {name, url}
-let current = 0;
-let repeat = false;
-let rafId = null;
+let tracks = [], current = 0, repeat = false, rafId = null;
 
-/* Single audio */
+/* Audio */
 const audio = new Audio();
 audio.preload = 'metadata';
 audio.crossOrigin = 'anonymous';
 
-/* Derive owner/repo for GitHub Pages */
-let host = window.location.hostname; // username.github.io
-let owner = host.split('.')[0] || '';
-let pathParts = window.location.pathname.split('/').filter(p => p);
-let repo = pathParts.length ? pathParts[0] : owner;
-const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/tracks`;
-
-/* Try GitHub API first, then fallback to parsing /tracks/ HTML (best-effort) */
-async function loadTracks() {
-  // 1) GitHub API attempt
-  try {
-    const res = await fetch(apiUrl);
-    if (res.ok) {
-      const json = await res.json();
-      if (Array.isArray(json)) {
-        const audioFiles = json
-          .filter(f => f.type === 'file' && /\.(mp3|wav|ogg|m4a|flac)$/i.test(f.name))
-          .map(f => ({ name: f.name, url: f.download_url }));
-        if (audioFiles.length) return audioFiles;
-      }
-    } else {
-      // non-ok e.g. 404 or rate limited — continue to fallback
-      console.warn('GitHub API responded with', res.status);
-    }
-  } catch (e) {
-    console.warn('GitHub API fetch failed:', e);
+/* Auto-detect owner/repo from URL (works for user pages and project pages) */
+function detectOwnerRepo(){
+  if (DEBUG_OWNER && DEBUG_REPO) {
+    log('Using DEBUG override for owner/repo:', DEBUG_OWNER, DEBUG_REPO);
+    return { owner: DEBUG_OWNER, repo: DEBUG_REPO };
   }
-
-  // 2) Fallback: fetch the folder URL and parse anchor links (works only on some servers)
-  try {
-    const req = await fetch('tracks/');
-    if (req.ok) {
-      const text = await req.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, 'text/html');
-      const links = [...doc.querySelectorAll('a')]
-        .map(a => a.getAttribute('href'))
-        .filter(h => h && /\.(mp3|wav|ogg|m4a|flac)$/i.test(h))
-        .map(h => {
-          // if it's an absolute URL use it, else prefix with tracks/
-          if (/^https?:\/\//i.test(h)) return h;
-          return 'tracks/' + h.replace(/^\/+/, '');
-        });
-      if (links.length) return links.map(u => {
-        const name = u.split('/').pop();
-        return { name, url: u };
-      });
-    } else {
-      console.warn('Fallback folder fetch responded with', req.status);
-    }
-  } catch (e) {
-    console.warn('Fallback folder fetch failed:', e);
-  }
-
-  return [];
+  const host = window.location.hostname; // e.g. username.github.io or custom domain
+  const pathParts = window.location.pathname.split('/').filter(Boolean); // ['', 'repo', ...]
+  // If this is username.github.io (user or org page), repo is owner for user pages if no pathParts
+  let owner = host.split('.')[0] || '';
+  let repo = pathParts.length ? pathParts[0] : owner;
+  log('Auto-detected owner/repo from URL:', { host, owner, repo, pathParts });
+  return { owner, repo };
 }
 
-/* Build playlist UI */
-function buildPlaylistUI() {
+const { owner, repo } = detectOwnerRepo();
+const apiUrl = owner && repo ? `https://api.github.com/repos/${owner}/${repo}/contents/tracks` : null;
+
+async function loadTracksFromGitHubAPI(){
+  if (!apiUrl) { warn('No API URL (owner/repo missing)'); return []; }
+  log('Fetching GitHub API:', apiUrl);
+  try {
+    const res = await fetch(apiUrl);
+    log('GitHub API response status:', res.status);
+    if (!res.ok) {
+      warn('GitHub API fetch not ok:', res.status);
+      return [];
+    }
+    const data = await res.json();
+    if (!Array.isArray(data)) { warn('GitHub API returned non-array:', data); return []; }
+    const list = data.filter(f => f.type === 'file' && /\.(mp3|wav|ogg|m4a|flac)$/i.test(f.name))
+                     .map(f => ({ name: f.name, url: f.download_url }));
+    log('GitHub API found files:', list.map(l=>l.name));
+    return list;
+  } catch (e) {
+    warn('GitHub API fetch failed:', e);
+    return [];
+  }
+}
+
+/* Fallback: try to fetch '/tracks/' HTML and parse links (best-effort) */
+async function loadTracksFromDirectoryIndex(){
+  try {
+    log('Attempting fallback: fetch "tracks/" directory index (may not exist on GH Pages)');
+    const res = await fetch('tracks/');
+    log('Fallback directory fetch status:', res.status);
+    if (!res.ok) return [];
+    const text = await res.text();
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const anchors = Array.from(doc.querySelectorAll('a')).map(a => a.getAttribute('href')).filter(Boolean);
+    const files = anchors.filter(h => /\.(mp3|wav|ogg|m4a|flac)$/i.test(h))
+                         .map(h => {
+                           if (/^https?:\/\//i.test(h)) return h;
+                           return 'tracks/' + h.replace(/^\/+/, '');
+                         });
+    log('Fallback parsed files:', files);
+    return files.map(u => ({ name: u.split('/').pop(), url: u }));
+  } catch (e) {
+    warn('Fallback directory parsing failed:', e);
+    return [];
+  }
+}
+
+/* Main loader tries API first, then fallback */
+async function loadTracks(){
+  showDebug('Loading tracks...');
+  let found = [];
+  if (apiUrl) {
+    found = await loadTracksFromGitHubAPI();
+  } else {
+    warn('apiUrl not set; skipping GitHub API stage');
+  }
+  if (!found.length) {
+    log('API returned zero results or was skipped — trying fallback directory parse');
+    const fallback = await loadTracksFromDirectoryIndex();
+    if (fallback && fallback.length) found = fallback;
+  }
+  if (!found.length) {
+    warn('No tracks found by any method.');
+  } else {
+    log('Total tracks found:', found.length, found.map(t=>t.name));
+  }
+  return found;
+}
+
+/* UI builders */
+function buildPlaylistUI(){
   playlistBox.innerHTML = '';
-  tracks.forEach((t, i) => {
+  tracks.forEach((t,i)=>{
     const el = document.createElement('div');
     el.className = 'pl-item';
     el.dataset.idx = i;
-    el.innerHTML = `<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cleanTitle(t.name)}</div>
-                    <div style="opacity:.6;font-size:13px">${i+1}</div>`;
-    el.onclick = () => goto(i);
+    el.innerHTML = `<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cleanTitle(t.name)}</div><div style="opacity:.6;font-size:13px">${i+1}</div>`;
+    el.onclick = ()=> goto(i);
     playlistBox.appendChild(el);
   });
   highlightPlaylist();
 }
-
 function highlightPlaylist(){
-  Array.from(playlistBox.children).forEach(it => {
-    it.classList.toggle('current', Number(it.dataset.idx) === current);
-  });
+  Array.from(playlistBox.children).forEach(it => it.classList.toggle('current', Number(it.dataset.idx) === current));
 }
-
-/* Render covers (all use pts.jpeg as requested) */
 function renderCovers(){
-  const leftIndex = (current - 1 + tracks.length) % tracks.length;
-  const rightIndex = (current + 1) % tracks.length;
   const coverUrl = 'pts.jpeg';
-
+  const leftIndex = (current-1+tracks.length)%tracks.length;
+  const rightIndex = (current+1)%tracks.length;
   coverCenter.style.backgroundImage = `url("${coverUrl}")`;
   coverLeft.style.backgroundImage = `url("${coverUrl}")`;
   coverRight.style.backgroundImage = `url("${coverUrl}")`;
-
-  coverCenter.setAttribute('title', tracks[current].name);
-  coverLeft.setAttribute('title', tracks[leftIndex] ? tracks[leftIndex].name : '');
-  coverRight.setAttribute('title', tracks[rightIndex] ? tracks[rightIndex].name : '');
-
-  if (tracks.length === 1) {
-    coverLeft.classList.add('hidden');
-    coverRight.classList.add('hidden');
-  } else {
-    coverLeft.classList.remove('hidden');
-    coverRight.classList.remove('hidden');
-  }
+  coverCenter.setAttribute('title', tracks[current]?.name || '');
+  coverLeft.setAttribute('title', tracks[leftIndex]?.name || '');
+  coverRight.setAttribute('title', tracks[rightIndex]?.name || '');
+  if (tracks.length <= 1) { coverLeft.classList.add('hidden'); coverRight.classList.add('hidden'); } else { coverLeft.classList.remove('hidden'); coverRight.classList.remove('hidden'); }
 }
 
-/* Load track by index */
-function loadTrack(index){
+/* Playback */
+function loadTrack(i){
   if (!tracks.length) return;
-  current = ((index % tracks.length) + tracks.length) % tracks.length;
+  current = ((i%tracks.length)+tracks.length)%tracks.length;
   const t = tracks[current];
   audio.src = t.url;
   audio.load();
@@ -418,132 +240,60 @@ function loadTrack(index){
   nowSub.textContent = `Track ${current+1} of ${tracks.length}`;
   renderCovers();
   highlightPlaylist();
-  // start playing
-  audio.play().catch(e => {
-    // Autoplay may be blocked; update UI state
-    playPause.textContent = '►';
-    console.warn('Autoplay prevented:', e);
-  });
+  audio.play().catch(e => { warn('Play prevented (autoplay):', e); playPause.textContent = '►'; });
   playPause.textContent = '❚❚';
 }
+function togglePlay(){ if (audio.paused){ audio.play(); playPause.textContent='❚❚'; startRAF(); } else { audio.pause(); playPause.textContent='►'; stopRAF(); } }
+function goNext(){ loadTrack(current+1); }
+function goPrev(){ loadTrack(current-1); }
+function goto(i){ loadTrack(i); }
 
-/* Playback control */
-function togglePlay(){
-  if (audio.paused) {
-    audio.play();
-    playPause.textContent = '❚❚';
-    startRAF();
-  } else {
-    audio.pause();
-    playPause.textContent = '►';
-    stopRAF();
-  }
-}
+/* Progress */
+function updateProgress(pct){ progressFill.style.width = `${pct*100}%`; }
+function startRAF(){ stopRAF(); function tick(){ if (audio.duration && !isNaN(audio.duration)){ const pct = audio.currentTime/audio.duration; updateProgress(pct); curTime.textContent = fmt(audio.currentTime); durTime.textContent = fmt(audio.duration); } else updateProgress(0); rafId=requestAnimationFrame(tick); } rafId=requestAnimationFrame(tick); }
+function stopRAF(){ if (rafId) cancelAnimationFrame(rafId); rafId=null; }
 
-/* Per user's mapping: "<" => next, ">" => previous */
-function goNext(){
-  loadTrack(current + 1);
-}
-function goPrev(){
-  loadTrack(current - 1);
-}
-function goto(i){
-  loadTrack(i);
-}
-
-/* Progress handling */
-function updateProgress(pct){
-  progressFill.style.width = `${pct*100}%`;
-}
-let rafId = null;
-function startRAF(){
-  stopRAF();
-  function tick(){
-    if (audio.duration && !isNaN(audio.duration)) {
-      const pct = audio.currentTime / audio.duration;
-      updateProgress(pct);
-      curTime.textContent = fmt(audio.currentTime);
-      durTime.textContent = fmt(audio.duration);
-    } else {
-      updateProgress(0);
-    }
-    rafId = requestAnimationFrame(tick);
-  }
-  rafId = requestAnimationFrame(tick);
-}
-function stopRAF(){ if (rafId) cancelAnimationFrame(rafId); rafId = null; }
-
-/* Event wiring */
+/* Events */
 playPause.addEventListener('click', togglePlay);
-skipNext.addEventListener('click', goNext); // "<" -> next
-btnNext.addEventListener('click', goNext);
-skipPrev.addEventListener('click', goPrev); // ">" -> prev
-btnPrev.addEventListener('click', goPrev);
+skipNext.addEventListener('click', goNext); btnNext.addEventListener('click', goNext);
+skipPrev.addEventListener('click', goPrev); btnPrev.addEventListener('click', goPrev);
+progressBar.addEventListener('click', e => { if (!audio.duration || isNaN(audio.duration)) return; const rect = progressBar.getBoundingClientRect(); const x = e.clientX - rect.left; const pct = Math.max(0, Math.min(1, x/rect.width)); audio.currentTime = pct*audio.duration; updateProgress(pct); });
+repeatBtn.addEventListener('click', ()=>{ repeat=!repeat; repeatBtn.classList.toggle('primary', repeat); if (repeat) repeatBtn.style.boxShadow='0 6px 20px rgba(94,94,255,0.18)'; else repeatBtn.style.boxShadow='none'; });
 
-progressBar.addEventListener('click', (e) => {
-  if (!audio.duration || isNaN(audio.duration)) return;
-  const rect = progressBar.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const pct = Math.max(0, Math.min(1, x / rect.width));
-  audio.currentTime = pct * audio.duration;
-  updateProgress(pct);
-});
+audio.addEventListener('loadedmetadata', ()=>{ durTime.textContent = fmt(audio.duration); curTime.textContent = fmt(audio.currentTime||0); });
+audio.addEventListener('play', ()=>{ playPause.textContent='❚❚'; startRAF(); });
+audio.addEventListener('pause', ()=>{ playPause.textContent='►'; stopRAF(); });
+audio.addEventListener('ended', ()=>{ if (repeat){ audio.currentTime = 0; audio.play(); } else { loadTrack(current+1); } });
 
-repeatBtn.addEventListener('click', () => {
-  repeat = !repeat;
-  repeatBtn.classList.toggle('primary', repeat);
-  if (repeat) repeatBtn.style.boxShadow = '0 6px 20px rgba(94,94,255,0.18)';
-  else repeatBtn.style.boxShadow = 'none';
-});
+document.addEventListener('keydown', (e)=>{ if (e.code === 'Space'){ e.preventDefault(); togglePlay(); } else if (e.key === '<' || e.key === ','){ goNext(); } else if (e.key === '>' || e.key === '.'){ goPrev(); } else if (e.key.toLowerCase() === 'r'){ repeatBtn.click(); } });
 
-audio.addEventListener('loadedmetadata', () => {
-  durTime.textContent = fmt(audio.duration);
-  curTime.textContent = fmt(audio.currentTime || 0);
-});
+coverLeft.addEventListener('click', ()=>goPrev()); coverRight.addEventListener('click', ()=>goNext()); coverCenter.addEventListener('click', ()=>togglePlay());
 
-audio.addEventListener('play', () => { playPause.textContent = '❚❚'; startRAF(); });
-audio.addEventListener('pause', () => { playPause.textContent = '►'; stopRAF(); });
-
-audio.addEventListener('ended', () => {
-  if (repeat) {
-    audio.currentTime = 0;
-    audio.play();
-  } else {
-    loadTrack(current + 1);
-  }
-});
-
-/* Keyboard */
-document.addEventListener('keydown', (e) => {
-  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-  else if (e.key === '<' || e.key === ',') goNext();
-  else if (e.key === '>' || e.key === '.') goPrev();
-  else if (e.key.toLowerCase() === 'r') repeatBtn.click();
-});
-
-/* Click covers */
-coverLeft.addEventListener('click', () => goPrev());
-coverRight.addEventListener('click', () => goNext());
-coverCenter.addEventListener('click', () => togglePlay());
-
-/* Startup: load tracks and initialize */
-(async () => {
-  nowTitle.textContent = 'Loading tracks...';
-  const found = await loadTracks();
-  // Normalize to objects {name,url}
-  if (Array.isArray(found) && found.length) {
+/* Startup */
+(async function init(){
+  try {
+    log('Starting player initialization.');
+    const found = await loadTracks();
+    if (!found || !found.length) {
+      nowTitle.textContent = 'No audio files found in /tracks/';
+      nowSub.textContent = 'Check console for details';
+      showDebug('No audio files found. Open devtools console for diagnostics.');
+      warn('No tracks discovered. If your repo is private, the GitHub API will not return assets without auth. If it is a project page, ensure index.html is in the repo root and tracks/ exists at the same level.');
+      return;
+    }
+    // Normalise to {name,url}
     tracks = found.map(it => (typeof it === 'string') ? { name: it.split('/').pop(), url: it } : it);
     buildPlaylistUI();
     loadTrack(0);
-  } else {
-    nowTitle.textContent = 'No audio files found in /tracks/';
-    nowSub.textContent = '';
+    showDebug('Loaded ' + tracks.length + ' tracks.');
+    log('Initialization successful. Tracks loaded:', tracks.map(t=>t.name));
+  } catch (err) {
+    error('Initialization error:', err);
+    nowTitle.textContent = 'Error loading tracks';
+    nowSub.textContent = err && err.message ? err.message : String(err);
+    showDebug('Error: see console (MUSICPLAYER:) for details');
   }
 })();
 </script>
-</body>
-</html>
-
-
 </body>
 </html>
