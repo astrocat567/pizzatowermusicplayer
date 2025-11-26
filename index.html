@@ -1,71 +1,176 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Music Player</title>
-  <style>
-    body { font-family: sans-serif; padding: 1em; }
+<meta charset="UTF-8">
+<title>Music Player</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0c0c0f;
+        color: white;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* LEFT COVER AREA */
+    #coverArea {
+        width: 40%;
+        background: #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 2px solid #222;
+    }
+
+    #coverArea img {
+        width: 80%;
+        max-width: 350px;
+        border-radius: 12px;
+        box-shadow: 0px 0px 20px #000;
+    }
+
+    /* RIGHT PLAYLIST AREA */
+    #playlistArea {
+        width: 60%;
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    h1 {
+        margin-top: 0;
+        font-size: 32px;
+        text-align: center;
+    }
+
     .track {
-      display: flex;
-      align-items: center;
-      margin-bottom: 1em;
+        background: #1a1a1d;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: 0.2s;
+        border: 1px solid #222;
     }
-    .track .cover {
-      width: 64px;
-      height: 64px;
-      margin-right: 1em;
+
+    .track:hover {
+        background: #222228;
+        transform: translateY(-2px);
     }
-    .track .title {
-      flex: 1;
-      margin-right: 1em;
-      font-weight: bold;
+
+    .track span {
+        font-size: 18px;
+        font-weight: bold;
     }
-    audio {
-      width: 200px;
+
+    /* CUSTOM BUTTONS */
+    .playBtn {
+        background: #3e3ef3;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
     }
-  </style>
+
+    .playBtn:hover {
+        background: #5757ff;
+    }
+
+    .pauseBtn {
+        background: #d73737;
+    }
+
+    .pauseBtn:hover {
+        background: #ff4d4d;
+    }
+</style>
 </head>
 <body>
-  <h1>My Music Player</h1>
-  <div id="playlist"></div>
 
-  <script>
-    // Derive owner and repo from URL (username.github.io or username.github.io/repo)
+<!-- LEFT COVER IMAGE -->
+<div id="coverArea">
+    <img src="pts.jpeg" alt="Cover">
+</div>
+
+<!-- RIGHT PLAYLIST -->
+<div id="playlistArea">
+    <h1>Music Library</h1>
+    <div id="playlist"></div>
+</div>
+
+<script>
+    // Detect GitHub Pages repo automatically
     let host = window.location.hostname;
     let owner = host.split('.')[0];
     let pathParts = window.location.pathname.split('/').filter(p => p);
     let repo = pathParts.length ? pathParts[0] : owner;
 
     let apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/tracks`;
+
+    let currentAudio = null; // Only one plays at a time
+
     fetch(apiUrl)
-      .then(res => { if (!res.ok) throw new Error("Cannot fetch tracks"); return res.json(); })
-      .then(files => {
-        files.filter(f => f.type === 'file' && f.name.match(/\.(mp3|ogg|wav)$/i))
-             .forEach(file => {
-          let div = document.createElement('div');
-          div.className = 'track';
+        .then(res => res.json())
+        .then(files => {
+            files.filter(f => f.name.match(/\.(mp3|wav|ogg)$/i))
+                 .forEach(file => {
+                    let div = document.createElement("div");
+                    div.className = "track";
 
-          let img = document.createElement('img');
-          img.src = 'pts.jpeg';
-          img.alt = 'Cover';
-          img.className = 'cover';
-          div.appendChild(img);
+                    let title = document.createElement("span");
+                    title.textContent = file.name;
 
-          let title = document.createElement('span');
-          title.textContent = file.name;
-          title.className = 'title';
-          div.appendChild(title);
+                    let btn = document.createElement("button");
+                    btn.textContent = "Play";
+                    btn.className = "playBtn";
 
-          let audio = document.createElement('audio');
-          audio.controls = true;
-          audio.preload = 'none';
-          audio.src = file.download_url;
-          div.appendChild(audio);
+                    let audio = document.createElement("audio");
+                    audio.src = file.download_url;
+                    audio.preload = "none";
 
-          document.getElementById('playlist').appendChild(div);
+                    // Button actions
+                    btn.onclick = () => {
+                        if (currentAudio && currentAudio !== audio) {
+                            currentAudio.pause();
+                            currentAudio._button.textContent = "Play";
+                            currentAudio._button.classList.remove("pauseBtn");
+                            currentAudio._button.classList.add("playBtn");
+                        }
+
+                        if (audio.paused) {
+                            audio.play();
+                            btn.textContent = "Pause";
+                            btn.classList.remove("playBtn");
+                            btn.classList.add("pauseBtn");
+                            currentAudio = audio;
+                        } else {
+                            audio.pause();
+                            btn.textContent = "Play";
+                            btn.classList.remove("pauseBtn");
+                            btn.classList.add("playBtn");
+                        }
+                    };
+
+                    audio._button = btn;
+
+                    audio.onended = () => {
+                        btn.textContent = "Play";
+                        btn.classList.remove("pauseBtn");
+                        btn.classList.add("playBtn");
+                    };
+
+                    div.appendChild(title);
+                    div.appendChild(btn);
+                    document.getElementById("playlist").appendChild(div);
+                });
         });
-      })
-      .catch(err => console.error(err));
-  </script>
+</script>
+
 </body>
 </html>
