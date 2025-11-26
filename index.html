@@ -1,137 +1,88 @@
-<!--
-Music Player — index.html
-Drop this file in the root of your GitHub Pages repo.
-
-How to add music that the player will load automatically:
-1) Create a folder named `tracks/` at the repo root and put your audio files there (mp3,ogg,m4a etc).
-2) Create a `tracks.json` file at the repo root containing an array of track objects. Example:
-[
-  {
-    "title": "Sunny Day",
-    "artist": "Composer Name",
-    "file": "tracks/sunny-day.mp3",
-    "cover": "tracks/sunny-day.jpg"  // optional
-  },
-  {
-    "title": "Night Drive",
-    "artist": "Composer Name",
-    "file": "tracks/night-drive.ogg"
-  }
-]
-
-If `tracks.json` is missing the player will also let visitors add local files by drag & drop (client-only) or by using the "Add files" button.
-
-This player is fully client-side and works on GitHub Pages. All music files must be present in the repo and encoded with a browser-friendly codec.
--->
-
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tuff ahh music player</title>
+  <title>Music Player</title>
   <style>
-    :root{
-      --bg:#0f1724; --card:#111827; --accent:#7c3aed; --muted:#9ca3af; --glass: rgba(255,255,255,0.04);
-      --radius:14px; --shadow: 0 6px 18px rgba(2,6,23,0.6);
-      color-scheme: dark;
-    }
+    :root{--bg:#0f1724;--accent:#7c3aed;--muted:#9ca3af;--radius:14px;--shadow:0 6px 18px rgba(2,6,23,0.6);color-scheme:dark}
     *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg) 0%, #071024 100%);display:flex;align-items:center;justify-content:center;padding:28px}
-    .player{width:min(980px,96vw);background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:300px 1fr}
-
-    /* left column */
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg) 0%,#071024 100%);display:flex;align-items:center;justify-content:center;padding:28px}
+    .player{width:min(980px,96vw);height:min(1920px,96vh);background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:300px 1fr}
     .left{padding:22px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-right:1px solid rgba(255,255,255,0.03)}
     .cover{width:100%;height:300px;border-radius:10px;background:linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2));display:flex;align-items:center;justify-content:center;overflow:hidden}
     .cover img{width:100%;height:100%;object-fit:cover}
     .meta{margin-top:14px}
     h1{margin:0;font-size:18px}
     p.sub{margin:6px 0 0;color:var(--muted);font-size:13px}
-
     .controls{margin-top:18px;display:flex;gap:10px;align-items:center}
-    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:10px;cursor:pointer;user-select:none}
+    .btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:10px;cursor:pointer;user-select:none}
     .btn:active{transform:scale(0.98)}
     .big{padding:14px;border-radius:12px}
-
-    .left .list-actions{margin-top:18px;display:flex;gap:8px}
+    .list-actions{margin-top:18px;display:flex;gap:8px}
     .small{padding:8px;font-size:13px}
-
-    /* right column */
     .right{padding:20px;display:flex;flex-direction:column}
     .progress{height:8px;background:rgba(255,255,255,0.03);border-radius:999px;margin-top:8px;position:relative}
-    .progress > i{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#06b6d4);border-radius:999px}
+    .progress>i{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#06b6d4);border-radius:999px}
     .time-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:8px}
-
-    .playlist{margin-top:18px;overflow:auto;padding-right:6px}
+    .playlist-container{max-height:1080px;max-width:1920px;overflow-y:auto;overflow-x:hidden;margin-top:10px}
+    .playlist{margin-top:0;padding-right:6px}
     .track{display:flex;gap:12px;align-items:center;padding:10px;border-radius:10px;margin-bottom:8px;cursor:pointer}
     .track:hover{background:rgba(255,255,255,0.01)}
     .track.active{background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.04))}
     .track .t{flex:1}
     .track .t strong{display:block}
     .track .t span{color:var(--muted);font-size:13px}
-
     .footer-actions{margin-top:auto;display:flex;gap:10px;align-items:center}
-
     .dropzone{border:2px dashed rgba(255,255,255,0.03);padding:12px;border-radius:10px;text-align:center;color:var(--muted);margin-top:12px}
-
     input[type=file]{display:none}
-
+    .track-dropdown{width:100%;padding:6px;border-radius:8px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.1);background:#111827;color:white}
     @media (max-width:880px){.player{grid-template-columns:1fr;gap:12px}.left{order:2}.right{order:1}}
   </style>
 </head>
 <body>
-  <main class="player" role="application" aria-label="Music player">
-    <section class="left" aria-label="Now playing">
+  <main class="player">
+    <section class="left">
       <div class="cover" id="cover">
         <img id="coverImg" src="" alt="cover image" onerror="this.style.display='none'">
         <div id="noCover" style="color:var(--muted);font-size:14px">No cover</div>
       </div>
-
       <div class="meta">
         <h1 id="title">—</h1>
         <p class="sub" id="artist">—</p>
       </div>
-
-      <div class="controls" role="group" aria-label="playback controls">
-        <button class="btn" id="prevBtn" title="Previous">⏮️</button>
-        <button class="btn big" id="playBtn" title="Play / Pause">▶️</button>
-        <button class="btn" id="nextBtn" title="Next">⏭️</button>
-        <button class="btn" id="shuffleBtn" title="Shuffle">🔀</button>
-        <button class="btn" id="repeatBtn" title="Repeat (none -> one -> all)">🔁</button>
+      <div class="controls">
+        <button class="btn" id="prevBtn">⏮️</button>
+        <button class="btn big" id="playBtn">▶️</button>
+        <button class="btn" id="nextBtn">⏭️</button>
+        <button class="btn" id="shuffleBtn">🔀</button>
+        <button class="btn" id="repeatBtn">🔁</button>
       </div>
-
       <div class="list-actions">
-        <label class="btn small" for="fileInput" title="Add files">➕ Add files</label>
-        <button class="btn small" id="clearBtn" title="Clear playlist">🗑️ Clear</button>
-        <a class="btn small" id="downloadBtn" download title="Download current track">⬇️ Download</a>
+        <label class="btn small" for="fileInput">➕ Add files</label>
+        <button class="btn small" id="clearBtn">🗑️ Clear</button>
+        <a class="btn small" id="downloadBtn" download>⬇️ Download</a>
       </div>
-
-      <div class="dropzone" id="dropzone">Drag & drop audio files here (or use Add files)</div>
-
-      <div style="font-size:12px;color:var(--muted);margin-top:10px">Keyboard: Space play/pause • ←/→ prev/next • Up/Down volume</div>
+      <div class="dropzone" id="dropzone">Drag & drop audio files here</div>
     </section>
-
     <section class="right">
       <div>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="font-weight:600">Playlist</div>
           <div style="color:var(--muted);font-size:13px" id="trackCount">0</div>
         </div>
-
-        <div class="progress" id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <i></i>
-        </div>
+        <div class="progress" id="progressBar"><i></i></div>
         <div class="time-row"><div id="currentTime">0:00</div><div id="duration">0:00</div></div>
       </div>
-
-      <div class="playlist" id="playlist" tabindex="0" aria-label="Playlist"></div>
-
+      <select id="trackDropdown" class="track-dropdown"></select>
+      <div class="playlist-container">
+        <div class="playlist" id="playlist"></div>
+      </div>
       <div class="footer-actions">
         <div style="display:flex;gap:8px;align-items:center">
           <label for="volume" style="color:var(--muted);font-size:13px">Vol</label>
           <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8">
         </div>
-
         <div style="margin-left:auto;display:flex;gap:8px">
           <button class="btn small" id="shuffleState">Shuffle Off</button>
           <button class="btn small" id="repeatState">Repeat: none</button>
@@ -139,226 +90,30 @@ This player is fully client-side and works on GitHub Pages. All music files must
       </div>
     </section>
   </main>
-
   <input id="fileInput" type="file" accept="audio/*" multiple>
-
   <script>
-  /*
-    Behavior summary:
-    - Tries to fetch ./tracks.json and load it as the playlist.
-    - If tracks.json isn't available, playlist starts empty; users can add files via "Add files" or drag/drop.
-    - Supports keyboard shortcuts and basic playback controls.
-    - Works on GitHub Pages as long as the audio files are checked into the repo and referenced in tracks.json.
-  */
-
-  const audio = new Audio();
-  audio.crossOrigin = 'anonymous';
-  let tracks = []; // {title,artist,file,cover}
-  let idx = 0;
-  let shuffle = false;
-  let repeatMode = 0; // 0=none,1=one,2=all
-
-  const el = {
-    coverImg: document.getElementById('coverImg'),
-    noCover: document.getElementById('noCover'),
-    title: document.getElementById('title'),
-    artist: document.getElementById('artist'),
-    playBtn: document.getElementById('playBtn'),
-    prevBtn: document.getElementById('prevBtn'),
-    nextBtn: document.getElementById('nextBtn'),
-    shuffleBtn: document.getElementById('shuffleBtn'),
-    repeatBtn: document.getElementById('repeatBtn'),
-    playlist: document.getElementById('playlist'),
-    progressBar: document.getElementById('progressBar'),
-    progressFill: document.querySelector('.progress > i'),
-    currentTime: document.getElementById('currentTime'),
-    duration: document.getElementById('duration'),
-    fileInput: document.getElementById('fileInput'),
-    dropzone: document.getElementById('dropzone'),
-    volume: document.getElementById('volume'),
-    trackCount: document.getElementById('trackCount'),
-    downloadBtn: document.getElementById('downloadBtn'),
-    shuffleState: document.getElementById('shuffleState'),
-    repeatState: document.getElementById('repeatState'),
-    clearBtn: document.getElementById('clearBtn')
-  };
-
-  // AUTO-SCAN THE GITHUB REPO FOR TRACKS
-const GITHUB_USER = "astrocat567";
-const GITHUB_REPO = "pizzatowermusicplayer";
-const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/tracks`;
-
-fetch(API_URL)
-  .then(r => r.json())
-  .then(files => {
-    const mp3files = files.filter(f => f.name.toLowerCase().endsWith(".mp3"));
-
-    tracks = mp3files.map(f => {
-      const parsed = parseName(f.name);
-      return {
-        title: parsed.title,
-        artist: parsed.artist,
-        file: "tracks/" + f.name,
-        cover: "pts.jpeg"
-      };
-    });
-
-    renderPlaylist();
-    if (tracks.length > 0) loadTrack(0);
-  })
-  .catch(err => {
-    console.warn("Could not scan repo:", err);
-    renderPlaylist();
-  });
-    loadTrack(0);
-  }).catch(()=>{
-    // no tracks.json; playlist remains empty until user adds files
-    renderPlaylist();
-  });
-
-  function extractFilename(path){
-    return path.split('/').pop();
-  }
-
-  function renderPlaylist(){
-    el.playlist.innerHTML = '';
-    tracks.forEach((t,i)=>{
-      const tr = document.createElement('div');
-      tr.className = 'track' + (i===idx? ' active':'');
-      tr.tabIndex = 0;
-      tr.innerHTML = `
-        <div class="t">
-          <strong>${escapeHtml(t.title)}</strong>
-          <span>${escapeHtml(t.artist)}</span>
-        </div>
-        <div style="color:var(--muted);font-size:13px">${i+1}</div>`;
-      tr.addEventListener('click', ()=>{loadTrack(i); play();});
-      tr.addEventListener('keydown', (e)=>{ if(e.key==='Enter') { loadTrack(i); play(); } });
-      el.playlist.appendChild(tr);
-    });
-    el.trackCount.textContent = tracks.length;
-    updateDownloadLink();
-  }
-
-  function loadTrack(i){
-    if (i<0 || i>=tracks.length) return;
-    idx = i;
-    const t = tracks[idx];
-    audio.src = t.file;
-    el.title.textContent = t.title || '—';
-    el.artist.textContent = t.artist || '—';
-    if (t.cover){ el.coverImg.src = t.cover; el.coverImg.style.display='block'; el.noCover.style.display='none'; }
-    else { el.coverImg.style.display='none'; el.noCover.style.display='block'; }
-    [...document.querySelectorAll('.track')].forEach((n,ni)=> n.classList.toggle('active', ni===idx));
-    updateDownloadLink();
-  }
-
-  function play(){ audio.play().then(()=>{ el.playBtn.textContent = '⏸️'; }).catch(e=>{ console.warn(e); alert('Playback failed — check file CORS or encoding.');}); }
-  function pause(){ audio.pause(); el.playBtn.textContent = '▶️'; }
-  function togglePlay(){ audio.paused ? play() : pause(); }
-
-  el.playBtn.addEventListener('click', togglePlay);
-  el.prevBtn.addEventListener('click', ()=>{ prevTrack(); });
-  el.nextBtn.addEventListener('click', ()=>{ nextTrack(); });
-
-  el.shuffleBtn.addEventListener('click', ()=>{ shuffle = !shuffle; el.shuffleBtn.style.opacity= shuffle?1:0.8; el.shuffleState.textContent = shuffle? 'Shuffle On':'Shuffle Off'; });
-  el.repeatBtn.addEventListener('click', ()=>{ repeatMode = (repeatMode+1)%3; const labels=['none','one','all']; el.repeatState.textContent = `Repeat: ${labels[repeatMode]}`; });
-
-  el.volume.addEventListener('input',(e)=>{ audio.volume = parseFloat(e.target.value); });
-  audio.volume = parseFloat(el.volume.value);
-
-  audio.addEventListener('timeupdate', ()=>{
-    const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
-    el.progressFill.style.width = pct + '%';
-    el.progressBar.setAttribute('aria-valuenow', String(Math.floor(pct)));
-    el.currentTime.textContent = formatTime(audio.currentTime);
-    el.duration.textContent = isFinite(audio.duration) ? formatTime(audio.duration) : '0:00';
-  });
-
-  audio.addEventListener('ended', ()=>{
-    if (repeatMode===1){ // repeat one
-      audio.currentTime = 0; play();
-    } else {
-      nextTrack();
-    }
-  });
-
-  el.progressBar.addEventListener('click', (e)=>{
-    const rect = el.progressBar.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    if (audio.duration) audio.currentTime = pct * audio.duration;
-  });
-
-  function formatTime(s){ if (!isFinite(s)) return '0:00'; s = Math.floor(s); const m = Math.floor(s/60); const sec = s%60; return m+':'+String(sec).padStart(2,'0'); }
-
-  function prevTrack(){ if (audio.currentTime>3){ audio.currentTime = 0; } else {
-    if (shuffle){ idx = Math.floor(Math.random()*tracks.length); }
-    else idx = (idx-1+tracks.length)%tracks.length;
-    loadTrack(idx); play();
-  }}
-  function nextTrack(){ if (shuffle){ idx = Math.floor(Math.random()*tracks.length); }
-    else idx = (idx+1) % tracks.length;
-    if (idx===0 && repeatMode===0 && !shuffle && audio.src){ // reached end and not repeating
-      pause(); audio.currentTime = 0; loadTrack(0); return;
-    }
-    loadTrack(idx); play();
-  }
-
-  // file adding
-  el.fileInput.addEventListener('change', (e)=>{ handleFiles(e.target.files); e.target.value=''; });
-  el.dropzone.addEventListener('dragover', (e)=>{ e.preventDefault(); el.dropzone.style.borderColor='rgba(124,58,237,0.6)'; });
-  el.dropzone.addEventListener('dragleave', ()=>{ el.dropzone.style.borderColor='rgba(255,255,255,0.03)'; });
-  el.dropzone.addEventListener('drop', (e)=>{ e.preventDefault(); el.dropzone.style.borderColor='rgba(255,255,255,0.03)'; handleFiles(e.dataTransfer.files); });
-
-  function handleFiles(list){
-    const arr = Array.from(list).filter(f=>f.type && f.type.startsWith('audio'));
-    arr.forEach(f=>{
-      // create object URL so it can be played client-side
-      const url = URL.createObjectURL(f);
-      tracks.push({title: f.name.replace(/\.[^/.]+$/, ''), artist: '', file: url, cover: ''});
-    });
-    renderPlaylist();
-    if (tracks.length===arr.length) loadTrack(0); // if previously empty, start at first
-  }
-
-  // download current track when it's a remote file in repo or data URL
-  function updateDownloadLink(){
-    if (!tracks[idx]){ el.downloadBtn.style.display='none'; return; }
-    el.downloadBtn.style.display='inline-block';
-    // if the file is a blob URL (starts with blob:), we fetch it from the in-memory blob
-    const f = tracks[idx].file;
-    if (f.startsWith('blob:')){
-      fetch(f).then(r=>r.blob()).then(b=>{ const u = URL.createObjectURL(b); el.downloadBtn.href = u; el.downloadBtn.download = tracks[idx].title || 'track'; });
-    } else {
-      // remote file in repo - point directly (GitHub Pages serves static files)
-      el.downloadBtn.href = f; el.downloadBtn.download = '';
-    }
-  }
-
-  // clear
-  el.clearBtn.addEventListener('click', ()=>{ tracks = []; idx = 0; audio.pause(); audio.src=''; renderPlaylist(); loadEmptyMeta(); });
-  function loadEmptyMeta(){ el.title.textContent='—'; el.artist.textContent='—'; el.coverImg.style.display='none'; el.noCover.style.display='block'; el.trackCount.textContent='0'; }
-
-  // keyboard shortcuts
-  window.addEventListener('keydown', (e)=>{
-    if (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
-    if (e.code==='Space'){ e.preventDefault(); togglePlay(); }
-    if (e.key==='ArrowRight'){ nextTrack(); }
-    if (e.key==='ArrowLeft'){ prevTrack(); }
-    if (e.key==='ArrowUp'){ audio.volume = Math.min(1, audio.volume + 0.05); el.volume.value = audio.volume; }
-    if (e.key==='ArrowDown'){ audio.volume = Math.max(0, audio.volume - 0.05); el.volume.value = audio.volume; }
-  });
-
-  // small util
-  function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  
-  // friendly message if user opens without tracks.json
-  if (!location.pathname.endsWith('.html')){
-    // nothing — normal for GitHub Pages
-  }
-
-  // Initial empty meta
-  loadEmptyMeta();
+    const audio=new Audio();
+    audio.crossOrigin='anonymous';
+    let tracks=[],idx=0,shuffle=false,repeatMode=0;
+    const el={coverImg:document.getElementById('coverImg'),noCover:document.getElementById('noCover'),title:document.getElementById('title'),artist:document.getElementById('artist'),playBtn:document.getElementById('playBtn'),prevBtn:document.getElementById('prevBtn'),nextBtn:document.getElementById('nextBtn'),shuffleBtn:document.getElementById('shuffleBtn'),repeatBtn:document.getElementById('repeatBtn'),playlist:document.getElementById('playlist'),progressBar:document.getElementById('progressBar'),progressFill:document.querySelector('.progress>i'),currentTime:document.getElementById('currentTime'),duration:document.getElementById('duration'),fileInput:document.getElementById('fileInput'),dropzone:document.getElementById('dropzone'),volume:document.getElementById('volume'),trackCount:document.getElementById('trackCount'),downloadBtn:document.getElementById('downloadBtn'),shuffleState:document.getElementById('shuffleState'),repeatState:document.getElementById('repeatState'),clearBtn:document.getElementById('clearBtn'),trackDropdown:document.getElementById('trackDropdown')};
+    const GITHUB_USER="astrocat567",GITHUB_REPO="pizzatowermusicplayer",API_URL=`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/tracks`,DEFAULT_COVER="tracks/pts.jpeg";
+    function parseName(f){let n=f.replace(/\.[^/.]+$/i,'');if(n.includes(" - ")){const [a,t]=n.split(" - ");return{artist:a.trim(),title:t.trim()}}if(n.includes("-")){const [t,a]=n.split("-");return{title:t.trim(),artist:a.trim()}}return{title:n,artist:''}}
+    function findCoverFor(b,f){const c=[b+'.jpg',b+'.jpeg',b+'.png'];for(const i of c)if(f.some(e=>e.name.toLowerCase()===i.toLowerCase()))return'tracks/'+i;if(f.some(e=>['pts.jpeg','pts.jpg'].includes(e.name.toLowerCase())))return DEFAULT_COVER;return''}
+    function updateDownloadLink(){if(tracks[idx])el.downloadBtn.href=tracks[idx].file;else el.downloadBtn.removeAttribute('href')}
+    fetch(API_URL).then(r=>r.ok?r.json():Promise.reject()).then(f=>{const mp3=f.filter(x=>x.name&&x.name.toLowerCase().endsWith('.mp3'));tracks=mp3.map(x=>{const p=parseName(x.name);const b=x.name.replace(/\.[^/.]+$/,'');return{title:p.title,artist:p.artist,file:'tracks/'+x.name,cover:findCoverFor(b,f)}});renderPlaylist();renderDropdown();if(tracks.length>0)loadTrack(0)}).catch(()=>{renderPlaylist()});
+    function renderPlaylist(){el.playlist.innerHTML='';tracks.forEach((t,i)=>{const tr=document.createElement('div');tr.className='track'+(i===idx?' active':'');tr.tabIndex=0;tr.innerHTML=`<div class="t"><strong>${t.title}</strong><span>${t.artist}</span></div><div style="color:var(--muted);font-size:13px">${i+1}</div>`;tr.addEventListener('click',()=>{loadTrack(i);play()});el.playlist.appendChild(tr)});el.trackCount.textContent=tracks.length;updateDownloadLink()}
+    function renderDropdown(){el.trackDropdown.innerHTML='';tracks.forEach((t,i)=>{const o=document.createElement('option');o.value=i;o.textContent=t.artist?`${t.title} — ${t.artist}`:t.title;el.trackDropdown.appendChild(o)});el.trackDropdown.onchange=()=>{loadTrack(parseInt(el.trackDropdown.value))}}
+    function loadTrack(i){if(i<0||i>=tracks.length)return;idx=i;const t=tracks[idx];audio.src=t.file;audio.load();el.title.textContent=t.title||'—';el.artist.textContent=t.artist||'—';if(t.cover){el.coverImg.src=t.cover;el.coverImg.style.display='block';el.noCover.style.display='none'}else{el.coverImg.style.display='none';el.noCover.style.display='block'}[...document.querySelectorAll('.track')].forEach((n,ni)=>n.classList.toggle('active',ni===idx));updateDownloadLink();el.trackDropdown.value=idx}
+    function play(){audio.play().then(()=>{el.playBtn.textContent='⏸️'}).catch(()=>{})}
+    function pause(){audio.pause();el.playBtn.textContent='▶️'}
+    function togglePlay(){audio.paused?play():pause()}
+    el.playBtn.addEventListener('click',togglePlay);
+    el.prevBtn.addEventListener('click',()=>{idx=(idx-1+tracks.length)%tracks.length;loadTrack(idx);play();});
+    el.nextBtn.addEventListener('click',()=>{idx=(idx+1)%tracks.length;loadTrack(idx);play();});
+    el.shuffleBtn.addEventListener('click',()=>{shuffle=!shuffle;el.shuffleBtn.style.opacity=shuffle?1:0.8;el.shuffleState.textContent=shuffle?'Shuffle On':'Shuffle Off'});
+    el.repeatBtn.addEventListener('click',()=>{repeatMode=(repeatMode+1)%3;const labels=['none','one','all'];el.repeatState.textContent=`Repeat: ${labels[repeatMode]}`});
+    el.volume.addEventListener('input',e=>{audio.volume=parseFloat(e.target.value)});
+    audio.volume=parseFloat(el.volume.value);
   </script>
 </body>
 </html>
