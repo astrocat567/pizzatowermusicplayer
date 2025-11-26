@@ -1,119 +1,71 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
   <title>Music Player</title>
   <style>
-    :root{--bg:#0f1724;--accent:#7c3aed;--muted:#9ca3af;--radius:14px;--shadow:0 6px 18px rgba(2,6,23,0.6);color-scheme:dark}
-    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg) 0%,#071024 100%);display:flex;align-items:center;justify-content:center;padding:28px}
-    .player{width:min(980px,96vw);height:min(1920px,96vh);background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:300px 1fr}
-    .left{padding:22px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-right:1px solid rgba(255,255,255,0.03)}
-    .cover{width:100%;height:300px;border-radius:10px;background:linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2));display:flex;align-items:center;justify-content:center;overflow:hidden}
-    .cover img{width:100%;height:100%;object-fit:cover}
-    .meta{margin-top:14px}
-    h1{margin:0;font-size:18px}
-    p.sub{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .controls{margin-top:18px;display:flex;gap:10px;align-items:center}
-    .btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:10px;cursor:pointer;user-select:none}
-    .btn:active{transform:scale(0.98)}
-    .big{padding:14px;border-radius:12px}
-    .list-actions{margin-top:18px;display:flex;gap:8px}
-    .small{padding:8px;font-size:13px}
-    .right{padding:20px;display:flex;flex-direction:column}
-    .progress{height:8px;background:rgba(255,255,255,0.03);border-radius:999px;margin-top:8px;position:relative}
-    .progress>i{position:absolute;left:0;top:0;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#06b6d4);border-radius:999px}
-    .time-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:8px}
-    .playlist-container{max-height:1080px;max-width:1920px;overflow-y:auto;overflow-x:hidden;margin-top:10px}
-    .playlist{margin-top:0;padding-right:6px}
-    .track{display:flex;gap:12px;align-items:center;padding:10px;border-radius:10px;margin-bottom:8px;cursor:pointer}
-    .track:hover{background:rgba(255,255,255,0.01)}
-    .track.active{background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.04))}
-    .track .t{flex:1}
-    .track .t strong{display:block}
-    .track .t span{color:var(--muted);font-size:13px}
-    .footer-actions{margin-top:auto;display:flex;gap:10px;align-items:center}
-    .dropzone{border:2px dashed rgba(255,255,255,0.03);padding:12px;border-radius:10px;text-align:center;color:var(--muted);margin-top:12px}
-    input[type=file]{display:none}
-    .track-dropdown{width:100%;padding:6px;border-radius:8px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.1);background:#111827;color:white}
-    @media (max-width:880px){.player{grid-template-columns:1fr;gap:12px}.left{order:2}.right{order:1}}
+    body { font-family: sans-serif; padding: 1em; }
+    .track {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1em;
+    }
+    .track .cover {
+      width: 64px;
+      height: 64px;
+      margin-right: 1em;
+    }
+    .track .title {
+      flex: 1;
+      margin-right: 1em;
+      font-weight: bold;
+    }
+    audio {
+      width: 200px;
+    }
   </style>
 </head>
 <body>
-  <main class="player">
-    <section class="left">
-      <div class="cover" id="cover">
-        <img id="coverImg" src="" alt="cover image" onerror="this.style.display='none'">
-        <div id="noCover" style="color:var(--muted);font-size:14px">No cover</div>
-      </div>
-      <div class="meta">
-        <h1 id="title">—</h1>
-        <p class="sub" id="artist">—</p>
-      </div>
-      <div class="controls">
-        <button class="btn" id="prevBtn">⏮️</button>
-        <button class="btn big" id="playBtn">▶️</button>
-        <button class="btn" id="nextBtn">⏭️</button>
-        <button class="btn" id="shuffleBtn">🔀</button>
-        <button class="btn" id="repeatBtn">🔁</button>
-      </div>
-      <div class="list-actions">
-        <label class="btn small" for="fileInput">➕ Add files</label>
-        <button class="btn small" id="clearBtn">🗑️ Clear</button>
-        <a class="btn small" id="downloadBtn" download>⬇️ Download</a>
-      </div>
-      <div class="dropzone" id="dropzone">Drag & drop audio files here</div>
-    </section>
-    <section class="right">
-      <div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-weight:600">Playlist</div>
-          <div style="color:var(--muted);font-size:13px" id="trackCount">0</div>
-        </div>
-        <div class="progress" id="progressBar"><i></i></div>
-        <div class="time-row"><div id="currentTime">0:00</div><div id="duration">0:00</div></div>
-      </div>
-      <select id="trackDropdown" class="track-dropdown"></select>
-      <div class="playlist-container">
-        <div class="playlist" id="playlist"></div>
-      </div>
-      <div class="footer-actions">
-        <div style="display:flex;gap:8px;align-items:center">
-          <label for="volume" style="color:var(--muted);font-size:13px">Vol</label>
-          <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8">
-        </div>
-        <div style="margin-left:auto;display:flex;gap:8px">
-          <button class="btn small" id="shuffleState">Shuffle Off</button>
-          <button class="btn small" id="repeatState">Repeat: none</button>
-        </div>
-      </div>
-    </section>
-  </main>
-  <input id="fileInput" type="file" accept="audio/*" multiple>
+  <h1>My Music Player</h1>
+  <div id="playlist"></div>
+
   <script>
-    const audio=new Audio();
-    audio.crossOrigin='anonymous';
-    let tracks=[],idx=0,shuffle=false,repeatMode=0;
-    const el={coverImg:document.getElementById('coverImg'),noCover:document.getElementById('noCover'),title:document.getElementById('title'),artist:document.getElementById('artist'),playBtn:document.getElementById('playBtn'),prevBtn:document.getElementById('prevBtn'),nextBtn:document.getElementById('nextBtn'),shuffleBtn:document.getElementById('shuffleBtn'),repeatBtn:document.getElementById('repeatBtn'),playlist:document.getElementById('playlist'),progressBar:document.getElementById('progressBar'),progressFill:document.querySelector('.progress>i'),currentTime:document.getElementById('currentTime'),duration:document.getElementById('duration'),fileInput:document.getElementById('fileInput'),dropzone:document.getElementById('dropzone'),volume:document.getElementById('volume'),trackCount:document.getElementById('trackCount'),downloadBtn:document.getElementById('downloadBtn'),shuffleState:document.getElementById('shuffleState'),repeatState:document.getElementById('repeatState'),clearBtn:document.getElementById('clearBtn'),trackDropdown:document.getElementById('trackDropdown')};
-    const GITHUB_USER="astrocat567",GITHUB_REPO="pizzatowermusicplayer",API_URL=`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/tracks`,DEFAULT_COVER="tracks/pts.jpeg";
-    function parseName(f){let n=f.replace(/\.[^/.]+$/i,'');if(n.includes(" - ")){const [a,t]=n.split(" - ");return{artist:a.trim(),title:t.trim()}}if(n.includes("-")){const [t,a]=n.split("-");return{title:t.trim(),artist:a.trim()}}return{title:n,artist:''}}
-    function findCoverFor(b,f){const c=[b+'.jpg',b+'.jpeg',b+'.png'];for(const i of c)if(f.some(e=>e.name.toLowerCase()===i.toLowerCase()))return'tracks/'+i;if(f.some(e=>['pts.jpeg','pts.jpg'].includes(e.name.toLowerCase())))return DEFAULT_COVER;return''}
-    function updateDownloadLink(){if(tracks[idx])el.downloadBtn.href=tracks[idx].file;else el.downloadBtn.removeAttribute('href')}
-    fetch(API_URL).then(r=>r.ok?r.json():Promise.reject()).then(f=>{const mp3=f.filter(x=>x.name&&x.name.toLowerCase().endsWith('.mp3'));tracks=mp3.map(x=>{const p=parseName(x.name);const b=x.name.replace(/\.[^/.]+$/,'');return{title:p.title,artist:p.artist,file:'tracks/'+x.name,cover:findCoverFor(b,f)}});renderPlaylist();renderDropdown();if(tracks.length>0)loadTrack(0)}).catch(()=>{renderPlaylist()});
-    function renderPlaylist(){el.playlist.innerHTML='';tracks.forEach((t,i)=>{const tr=document.createElement('div');tr.className='track'+(i===idx?' active':'');tr.tabIndex=0;tr.innerHTML=`<div class="t"><strong>${t.title}</strong><span>${t.artist}</span></div><div style="color:var(--muted);font-size:13px">${i+1}</div>`;tr.addEventListener('click',()=>{loadTrack(i);play()});el.playlist.appendChild(tr)});el.trackCount.textContent=tracks.length;updateDownloadLink()}
-    function renderDropdown(){el.trackDropdown.innerHTML='';tracks.forEach((t,i)=>{const o=document.createElement('option');o.value=i;o.textContent=t.artist?`${t.title} — ${t.artist}`:t.title;el.trackDropdown.appendChild(o)});el.trackDropdown.onchange=()=>{loadTrack(parseInt(el.trackDropdown.value))}}
-    function loadTrack(i){if(i<0||i>=tracks.length)return;idx=i;const t=tracks[idx];audio.src=t.file;audio.load();el.title.textContent=t.title||'—';el.artist.textContent=t.artist||'—';if(t.cover){el.coverImg.src=t.cover;el.coverImg.style.display='block';el.noCover.style.display='none'}else{el.coverImg.style.display='none';el.noCover.style.display='block'}[...document.querySelectorAll('.track')].forEach((n,ni)=>n.classList.toggle('active',ni===idx));updateDownloadLink();el.trackDropdown.value=idx}
-    function play(){audio.play().then(()=>{el.playBtn.textContent='⏸️'}).catch(()=>{})}
-    function pause(){audio.pause();el.playBtn.textContent='▶️'}
-    function togglePlay(){audio.paused?play():pause()}
-    el.playBtn.addEventListener('click',togglePlay);
-    el.prevBtn.addEventListener('click',()=>{idx=(idx-1+tracks.length)%tracks.length;loadTrack(idx);play();});
-    el.nextBtn.addEventListener('click',()=>{idx=(idx+1)%tracks.length;loadTrack(idx);play();});
-    el.shuffleBtn.addEventListener('click',()=>{shuffle=!shuffle;el.shuffleBtn.style.opacity=shuffle?1:0.8;el.shuffleState.textContent=shuffle?'Shuffle On':'Shuffle Off'});
-    el.repeatBtn.addEventListener('click',()=>{repeatMode=(repeatMode+1)%3;const labels=['none','one','all'];el.repeatState.textContent=`Repeat: ${labels[repeatMode]}`});
-    el.volume.addEventListener('input',e=>{audio.volume=parseFloat(e.target.value)});
-    audio.volume=parseFloat(el.volume.value);
+    // Derive owner and repo from URL (username.github.io or username.github.io/repo)
+    let host = window.location.hostname;
+    let owner = host.split('.')[0];
+    let pathParts = window.location.pathname.split('/').filter(p => p);
+    let repo = pathParts.length ? pathParts[0] : owner;
+
+    let apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/tracks`;
+    fetch(apiUrl)
+      .then(res => { if (!res.ok) throw new Error("Cannot fetch tracks"); return res.json(); })
+      .then(files => {
+        files.filter(f => f.type === 'file' && f.name.match(/\.(mp3|ogg|wav)$/i))
+             .forEach(file => {
+          let div = document.createElement('div');
+          div.className = 'track';
+
+          let img = document.createElement('img');
+          img.src = 'pts.jpeg';
+          img.alt = 'Cover';
+          img.className = 'cover';
+          div.appendChild(img);
+
+          let title = document.createElement('span');
+          title.textContent = file.name;
+          title.className = 'title';
+          div.appendChild(title);
+
+          let audio = document.createElement('audio');
+          audio.controls = true;
+          audio.preload = 'none';
+          audio.src = file.download_url;
+          div.appendChild(audio);
+
+          document.getElementById('playlist').appendChild(div);
+        });
+      })
+      .catch(err => console.error(err));
   </script>
 </body>
 </html>
