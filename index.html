@@ -6,170 +6,238 @@
 <style>
     body {
         margin: 0;
+        background: #0a0a0c;
         font-family: Arial, sans-serif;
-        background: #0c0c0f;
         color: white;
-        display: flex;
+        overflow-x: hidden;
         height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #carousel {
+        position: relative;
+        width: 100%;
+        height: 70vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         overflow: hidden;
     }
 
-    /* LEFT COVER AREA */
-    #coverArea {
-        width: 40%;
-        background: #111;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-right: 2px solid #222;
+    .cover {
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        background-size: cover;
+        background-position: center;
+        border-radius: 16px;
+        transition: all 0.35s ease;
+        opacity: 0;
     }
 
-    #coverArea img {
-        width: 80%;
-        max-width: 350px;
-        border-radius: 12px;
-        box-shadow: 0px 0px 20px #000;
+    .center {
+        transform: scale(1);
+        opacity: 1 !important;
+        z-index: 3;
     }
 
-    /* RIGHT PLAYLIST AREA */
-    #playlistArea {
-        width: 60%;
-        padding: 20px;
-        overflow-y: auto;
+    .left, .right {
+        transform: scale(0.7);
+        opacity: 0.3;
+        z-index: 2;
     }
 
-    h1 {
-        margin-top: 0;
-        font-size: 32px;
+    .left {
+        left: 15%;
+    }
+
+    .right {
+        right: 15%;
+    }
+
+    #player {
+        width: 100%;
         text-align: center;
+        margin-top: 20px;
     }
 
-    .track {
-        background: #1a1a1d;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 12px;
+    #title {
+        font-size: 22px;
+        margin-bottom: 6px;
+    }
+
+    #progress {
+        width: 60%;
+        margin: 10px auto;
+    }
+
+    #controls {
+        margin-top: 10px;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: 0.2s;
-        border: 1px solid #222;
+        justify-content: center;
+        gap: 20px;
     }
 
-    .track:hover {
-        background: #222228;
-        transform: translateY(-2px);
-    }
-
-    .track span {
-        font-size: 18px;
-        font-weight: bold;
-    }
-
-    /* CUSTOM BUTTONS */
-    .playBtn {
-        background: #3e3ef3;
+    button {
+        background: #1a1a1d;
         border: none;
-        padding: 10px 18px;
-        border-radius: 8px;
         color: white;
-        font-size: 16px;
+        padding: 10px 20px;
+        font-size: 22px;
+        border-radius: 8px;
         cursor: pointer;
         transition: 0.2s;
     }
 
-    .playBtn:hover {
-        background: #5757ff;
+    button:hover {
+        background: #333;
     }
 
-    .pauseBtn {
-        background: #d73737;
-    }
-
-    .pauseBtn:hover {
-        background: #ff4d4d;
+    #repeat.active {
+        color: #7db7ff;
     }
 </style>
 </head>
 <body>
 
-<!-- LEFT COVER IMAGE -->
-<div id="coverArea">
-    <img src="pts.jpeg" alt="Cover">
+<div id="carousel"></div>
+
+<div id="player">
+    <div id="title">Loading…</div>
+    <input type="range" id="progress" value="0" min="0" max="100">
+    
+    <div id="controls">
+        <button id="prev">&lt;</button>
+        <button id="playpause">▶</button>
+        <button id="next">&gt;</button>
+        <button id="repeat">↻</button>
+    </div>
 </div>
 
-<!-- RIGHT PLAYLIST -->
-<div id="playlistArea">
-    <h1>Music Library</h1>
-    <div id="playlist"></div>
-</div>
+<audio id="audio"></audio>
 
 <script>
-    // Detect GitHub Pages repo automatically
-    let host = window.location.hostname;
-    let owner = host.split('.')[0];
-    let pathParts = window.location.pathname.split('/').filter(p => p);
-    let repo = pathParts.length ? pathParts[0] : owner;
+// Remove file extensions from track titles
+function cleanTitle(filename) {
+    return filename.replace(/\.[^/.]+$/, "");
+}
 
-    let apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/tracks`;
+// Load tracks from the /tracks/ folder
+async function loadTracks() {
+    const req = await fetch("tracks/");
+    const text = await req.text();
 
-    let currentAudio = null; // Only one plays at a time
+    // GitHub Pages returns directory HTML listing
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/html");
 
-    fetch(apiUrl)
-        .then(res => res.json())
-        .then(files => {
-            files.filter(f => f.name.match(/\.(mp3|wav|ogg)$/i))
-                 .forEach(file => {
-                    let div = document.createElement("div");
-                    div.className = "track";
+    const links = [...doc.querySelectorAll("a")];
+    const audioFiles = links
+        .map(a => a.getAttribute("href"))
+        .filter(h => h && (h.endsWith(".mp3") || h.endsWith(".wav") || h.endsWith(".ogg")))
+        .map(file => "tracks/" + file);
 
-                    let title = document.createElement("span");
-                    title.textContent = file.name;
+    return audioFiles;
+}
 
-                    let btn = document.createElement("button");
-                    btn.textContent = "Play";
-                    btn.className = "playBtn";
+let tracks = [];
+let index = 0;
+let repeat = false;
 
-                    let audio = document.createElement("audio");
-                    audio.src = file.download_url;
-                    audio.preload = "none";
+const audio = document.getElementById("audio");
+const title = document.getElementById("title");
+const progress = document.getElementById("progress");
+const playpause = document.getElementById("playpause");
+const repeatBtn = document.getElementById("repeat");
 
-                    // Button actions
-                    btn.onclick = () => {
-                        if (currentAudio && currentAudio !== audio) {
-                            currentAudio.pause();
-                            currentAudio._button.textContent = "Play";
-                            currentAudio._button.classList.remove("pauseBtn");
-                            currentAudio._button.classList.add("playBtn");
-                        }
+const carousel = document.getElementById("carousel");
 
-                        if (audio.paused) {
-                            audio.play();
-                            btn.textContent = "Pause";
-                            btn.classList.remove("playBtn");
-                            btn.classList.add("pauseBtn");
-                            currentAudio = audio;
-                        } else {
-                            audio.pause();
-                            btn.textContent = "Play";
-                            btn.classList.remove("pauseBtn");
-                            btn.classList.add("playBtn");
-                        }
-                    };
+function updateCarousel() {
+    carousel.innerHTML = "";
 
-                    audio._button = btn;
+    const coverCenter = document.createElement("div");
+    coverCenter.className = "cover center";
+    coverCenter.style.backgroundImage = "url('pts.jpeg')";
+    carousel.appendChild(coverCenter);
 
-                    audio.onended = () => {
-                        btn.textContent = "Play";
-                        btn.classList.remove("pauseBtn");
-                        btn.classList.add("playBtn");
-                    };
+    if (tracks.length > 1) {
+        const leftIndex = (index - 1 + tracks.length) % tracks.length;
+        const rightIndex = (index + 1) % tracks.length;
 
-                    div.appendChild(title);
-                    div.appendChild(btn);
-                    document.getElementById("playlist").appendChild(div);
-                });
-        });
+        const left = document.createElement("div");
+        left.className = "cover left";
+        left.style.backgroundImage = "url('pts.jpeg')";
+        carousel.appendChild(left);
+
+        const right = document.createElement("div");
+        right.className = "cover right";
+        right.style.backgroundImage = "url('pts.jpeg')";
+        carousel.appendChild(right);
+    }
+}
+
+function loadSong(i) {
+    index = (i + tracks.length) % tracks.length;
+    const src = tracks[index];
+
+    audio.src = src;
+    title.textContent = cleanTitle(src.split("/").pop());
+    updateCarousel();
+    audio.play();
+    playpause.textContent = "⏸";
+}
+
+playpause.onclick = () => {
+    if (audio.paused) {
+        audio.play();
+        playpause.textContent = "⏸";
+    } else {
+        audio.pause();
+        playpause.textContent = "▶";
+    }
+};
+
+document.getElementById("next").onclick = () => loadSong(index + 1);
+document.getElementById("prev").onclick = () => loadSong(index - 1);
+
+repeatBtn.onclick = () => {
+    repeat = !repeat;
+    repeatBtn.classList.toggle("active");
+};
+
+audio.onended = () => {
+    if (repeat) loadSong(index);
+    else loadSong(index + 1);
+};
+
+audio.ontimeupdate = () => {
+    if (audio.duration) {
+        progress.value = (audio.currentTime / audio.duration) * 100;
+    }
+};
+
+progress.oninput = () => {
+    if (audio.duration) {
+        audio.currentTime = (progress.value / 100) * audio.duration;
+    }
+};
+
+// Startup
+(async () => {
+    tracks = await loadTracks();
+    if (tracks.length === 0) {
+        title.textContent = "No audio files found in /tracks/";
+        return;
+    }
+    loadSong(0);
+})();
+</script>
+
+</body>
+</html>
+
 </script>
 
 </body>
